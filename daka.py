@@ -62,8 +62,13 @@ class DaKa(object):
             html = res.content.decode()
 
         try:
-            old_info = json.loads(re.findall(r'oldInfo: ({[^\n]+})', html)[0])
-            new_info_tmp = json.loads(re.findall(r'def = ([^;]+)', html)[0])
+            old_infos = re.findall(r'oldInfo: ({[^\n]+})', html)
+            if len(old_infos) != 0:
+                old_info = json.loads(old_infos[0])
+            else:
+                raise RegexMatchError("未发现缓存信息，请先至少手动成功打卡一次再运行脚本")
+
+            new_info_tmp = json.loads(re.findall(r'def = ({[^\n]+})', html)[0])
             new_id = new_info_tmp['id']
             name = re.findall(r'realname: "([^\"]+)",', html)[0]
             number = re.findall(r"number: '([^\']+)',", html)[0]
@@ -88,6 +93,7 @@ class DaKa(object):
         new_info['gwszdd'] = ""
         new_info['szgjcs'] = ""
         self.info = new_info
+        # print(old_info, self.info)
         return new_info
 
     def _rsa_encrypt(self, password_str, e_str, M_str):
