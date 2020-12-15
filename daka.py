@@ -62,7 +62,7 @@ class DaKa(object):
             html = res.content.decode()
 
         try:
-            # old_info = json.loads(re.findall(r'oldInfo: ({[^}]+})', html)[0])
+            old_info = json.loads(re.findall(r'oldInfo: ({[^\n]+})', html)[0])
             new_info_tmp = json.loads(re.findall(r'def = ([^;]+)', html)[0])
             new_id = new_info_tmp['id']
             name = re.findall(r'realname: "([^\"]+)",', html)[0]
@@ -72,7 +72,7 @@ class DaKa(object):
         except json.decoder.JSONDecodeError as err:
             raise DecodeError('JSON decode error')
 
-        new_info = new_info_tmp.copy()
+        new_info = old_info.copy()
         new_info['id'] = new_id
         new_info['name'] = name
         new_info['number'] = number
@@ -168,6 +168,7 @@ if __name__=="__main__":
         print("⏲  请输入定时时间（默认每天6:05）")
         hour = input("\thour: ") or 6
         minute = input("\tminute: ") or 5
+    main(username, password)
 
     # Schedule task
     scheduler = BlockingScheduler()
