@@ -42,7 +42,7 @@
 4. 启动定时自动打卡脚本
 
    ```bash
-   $ python3 daka.py
+   $ python3 hitcarder.py
    ```
 
 

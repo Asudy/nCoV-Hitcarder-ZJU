@@ -5,8 +5,8 @@ import getpass
 from halo import Halo
 from apscheduler.schedulers.blocking import BlockingScheduler
 
-class DaKa(object):
-    """Hit card class
+class HitCarder(object):
+    """Hit carder class
 
     Attributes:
         username: (str) 浙大统一认证平台用户名（一般为学号）
