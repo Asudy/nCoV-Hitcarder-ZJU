@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import requests, json, re
-import time, datetime, os, sys
+import time, datetime, os
 import getpass
 from halo import Halo
 from apscheduler.schedulers.blocking import BlockingScheduler
+
 
 class HitCarder(object):
     """Hit carder class
@@ -16,6 +17,7 @@ class HitCarder(object):
         save_url: (str) 提交打卡url
         sess: (requests.Session) 统一的session
     """
+
     def __init__(self, username, password):
         self.username = username
         self.password = password
@@ -25,7 +27,7 @@ class HitCarder(object):
         self.sess = requests.Session()
 
     def login(self):
-        """Login to ZJU platform"""
+        """Login to ZJU platform."""
         res = self.sess.get(self.login_url)
         execution = re.search('name="execution" value="(.*?)"', res.text).group(1)
         res = self.sess.get(url='https://zjuam.zju.edu.cn/cas/v2/getPubKey').json()
@@ -44,19 +46,19 @@ class HitCarder(object):
         if '统一身份认证' in res.content.decode():
             raise LoginError('登录失败，请核实账号密码重新登录')
         return self.sess
-    
+
     def post(self):
-        """Post the hitcard info"""
+        """Post the hit card info."""
         res = self.sess.post(self.save_url, data=self.info)
         return json.loads(res.text)
-    
+
     def get_date(self):
-        """Get current date"""
+        """Get current date."""
         today = datetime.date.today()
-        return "%4d%02d%02d" %(today.year, today.month, today.day)
-        
+        return "%4d%02d%02d" % (today.year, today.month, today.day)
+
     def get_info(self, html=None):
-        """Get hitcard info, which is the old info with updated new time."""
+        """Get hit card info, which is the old info with updated new time."""
         if not html:
             res = self.sess.get(self.base_url)
             html = res.content.decode()
@@ -73,9 +75,9 @@ class HitCarder(object):
             name = re.findall(r'realname: "([^\"]+)",', html)[0]
             number = re.findall(r"number: '([^\']+)',", html)[0]
         except IndexError as err:
-            raise RegexMatchError('Relative info not found in html with regex')
+            raise RegexMatchError('Relative info not found in html with regex: ' + str(err))
         except json.decoder.JSONDecodeError as err:
-            raise DecodeError('JSON decode error')
+            raise DecodeError('JSON decode error: ' + str(err))
 
         new_info = old_info.copy()
         new_info['id'] = new_id
@@ -86,22 +88,21 @@ class HitCarder(object):
         # form change
         new_info['jrdqtlqk[]'] = 0
         new_info['jrdqjcqk[]'] = 0
-        new_info['sfsqhzjkk'] = 1   # 是否申领杭州健康码
-        new_info['sqhzjkkys'] = 1   # 杭州健康吗颜色，1:绿色 2:红色 3:黄色
-        new_info['sfqrxxss'] = 1    # 是否确认信息属实
+        new_info['sfsqhzjkk'] = 1  # 是否申领杭州健康码
+        new_info['sqhzjkkys'] = 1  # 杭州健康吗颜色，1:绿色 2:红色 3:黄色
+        new_info['sfqrxxss'] = 1  # 是否确认信息属实
         new_info['jcqzrq'] = ""
         new_info['gwszdd'] = ""
         new_info['szgjcs'] = ""
         self.info = new_info
-        # print(old_info, self.info)
         return new_info
 
     def _rsa_encrypt(self, password_str, e_str, M_str):
-        password_bytes = bytes(password_str, 'ascii') 
+        password_bytes = bytes(password_str, 'ascii')
         password_int = int.from_bytes(password_bytes, 'big')
-        e_int = int(e_str, 16) 
-        M_int = int(M_str, 16) 
-        result_int = pow(password_int, e_int, M_int) 
+        e_int = int(e_str, 16)
+        M_int = int(M_str, 16)
+        result_int = pow(password_int, e_int, M_int)
         return hex(result_int)[2:].rjust(128, '0')
 
 
@@ -110,9 +111,11 @@ class LoginError(Exception):
     """Login Exception"""
     pass
 
+
 class RegexMatchError(Exception):
     """Regex Matching Exception"""
     pass
+
 
 class DecodeError(Exception):
     """JSON Decode Exception"""
@@ -126,16 +129,16 @@ def main(username, password):
         username: (str) 浙大统一认证平台用户名（一般为学号）
         password: (str) 浙大统一认证平台密码
     """
-    print("\n[Time] %s" %datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    print("\n[Time] %s" % datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     print("🚌 打卡任务启动")
     spinner = Halo(text='Loading', spinner='dots')
     spinner.start('正在新建打卡实例...')
-    dk = DaKa(username, password)
+    hit_carder = HitCarder(username, password)
     spinner.succeed('已新建打卡实例')
 
     spinner.start(text='登录到浙大统一身份认证平台...')
     try:
-        dk.login()
+        hit_carder.login()
         spinner.succeed('已登录到浙大统一身份认证平台')
     except Exception as err:
         spinner.fail(str(err))
@@ -143,25 +146,25 @@ def main(username, password):
 
     spinner.start(text='正在获取个人信息...')
     try:
-        dk.get_info()
-        spinner.succeed('%s %s同学, 你好~' %(dk.info['number'], dk.info['name']))
+        hit_carder.get_info()
+        spinner.succeed('%s %s同学, 你好~' % (hit_carder.info['number'], hit_carder.info['name']))
     except Exception as err:
         spinner.fail('获取信息失败，请手动打卡，更多信息: ' + str(err))
         return
 
-    spinner.start(text='正在为您打卡打卡打卡')
+    spinner.start(text='正在为您打卡...')
     try:
-        res = dk.post()
+        res = hit_carder.post()
         if str(res['e']) == '0':
             spinner.stop_and_persist(symbol='🦄 '.encode('utf-8'), text='已为您打卡成功！')
         else:
             spinner.stop_and_persist(symbol='🦄 '.encode('utf-8'), text=res['m'])
-    except:
-        spinner.fail('数据提交失败')
-        return 
+    except Exception as err:
+        spinner.fail('数据提交失败 ' + str(err))
+        return
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     if os.path.exists('./config.json'):
         configs = json.loads(open('./config.json', 'r').read())
         username = configs["username"]
@@ -179,7 +182,7 @@ if __name__=="__main__":
     # Schedule task
     scheduler = BlockingScheduler()
     scheduler.add_job(main, 'cron', args=[username, password], hour=hour, minute=minute)
-    print('⏰ 已启动定时程序，每天 %02d:%02d 为您打卡' %(int(hour), int(minute)))
+    print('⏰ 已启动定时程序，每天 %02d:%02d 为您打卡' % (int(hour), int(minute)))
     print('Press Ctrl+{0} to exit'.format('Break' if os.name == 'nt' else 'C'))
 
     try:
