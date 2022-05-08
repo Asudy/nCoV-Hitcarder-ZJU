@@ -4,6 +4,7 @@ import time, datetime, os
 import getpass
 from halo import Halo
 from apscheduler.schedulers.blocking import BlockingScheduler
+import ddddocr
 
 
 class HitCarder(object):
@@ -25,6 +26,7 @@ class HitCarder(object):
         self.login_url = "https://zjuam.zju.edu.cn/cas/login?service=https%3A%2F%2Fhealthreport.zju.edu.cn%2Fa_zju%2Fapi%2Fsso%2Findex%3Fredirect%3Dhttps%253A%252F%252Fhealthreport.zju.edu.cn%252Fncov%252Fwap%252Fdefault%252Findex"
         self.base_url = "https://healthreport.zju.edu.cn/ncov/wap/default/index"
         self.save_url = "https://healthreport.zju.edu.cn/ncov/wap/default/save"
+        self.captcha_url = "https://healthreport.zju.edu.cn/ncov/wap/default/code"
         self.headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36"
         }
@@ -55,6 +57,12 @@ class HitCarder(object):
         """Post the hit card info."""
         res = self.sess.post(self.save_url, data=self.info, headers=self.headers)
         return json.loads(res.text)
+
+    def get_captcha(self):
+        """Get, OCR and return the captcha."""
+        ocr = ddddocr.DdddOcr(show_ad=False)
+        res = self.sess.get(self.captcha_url, headers=self.headers)
+        return ocr.classification(res.content)
 
     def get_date(self):
         """Get current date."""
@@ -98,6 +106,7 @@ class HitCarder(object):
         new_info['jcqzrq'] = ""
         new_info['gwszdd'] = ""
         new_info['szgjcs'] = ""
+        new_info['verifyCode'] = self.get_captcha()
         self.info = new_info
         return new_info
 
