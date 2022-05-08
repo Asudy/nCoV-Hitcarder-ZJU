@@ -1,3 +1,15 @@
+# nCoV-Hitcarder-ZJU
+
+本项目基于 [Tishacy](https://github.com/Tishacy) 同学的 [ZJU-nCov-Hitcarder](https://github.com/Asudy/ZJU-nCov-Hitcarder) 项目，由本人修改而来，非常感谢 Tishacy 同学～
+
+## Changelog
+
+- **2022.5.7：** 已支持获取、识别、自动填写表单中的验证码。
+
+以下是原 README。
+
+---
+
 # ZJU-nCov-Hitcarder
 
 浙大nCov肺炎健康打卡定时自动脚本
@@ -8,7 +20,7 @@
 
  项目用于学习交流，仅用于各项无异常时打卡，如有身体不适等情况还请自行如实打卡~
 
-<img src="https://github.com/Tishacy/ZJU-nCov-Hitcarder/raw/master/demo.png" width="500px"/>
+<img src="https://github.com/Asudy/nCoV-Hitcarder-ZJU/raw/master/demo.png" width="500px"/>
 
 > 感谢[conv1d](https://github.com/conv1d)同学，已使用requests直接登录浙大统一认证平台，不再依赖phantomjs
 
