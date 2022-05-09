@@ -179,12 +179,11 @@ def main(username, password):
         retry_cnt = 0
         while retry_cnt < hit_carder.max_retry:
             res = hit_carder.post()
+            if DEBUG: print('DEBUG: res =', res, '重试：', retry_cnt)
             if str(res['e']) == '0':
-                if DEBUG: print('DEBUG: res =', res)
                 spinner.stop_and_persist(symbol='🦄 '.encode('utf-8'), text='已为您打卡成功！' + ('重试次数：{}'.format(retry_cnt) if retry_cnt else ''))
                 break
             elif res['m'] == '验证码错误':
-                if DEBUG: print('DEBUG: res =', res)
                 hit_carder.get_captcha(update=True)     # update the captcha
                 retry_cnt += 1
             else:
