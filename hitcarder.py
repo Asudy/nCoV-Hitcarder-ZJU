@@ -98,7 +98,10 @@ class HitCarder(object):
         except json.decoder.JSONDecodeError as err:
             raise DecodeError('JSON decode error: ' + str(err))
 
-        if DEBUG: print('DEBUG: old_info:', old_info)
+        if DEBUG: 
+            with open('info.json', 'w') as f:
+                json.dump(old_info, f, indent=2)
+            print('DEBUG: old_info:', old_info)
 
         new_info = old_info.copy()
         new_info['id'] = new_id
