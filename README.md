@@ -6,6 +6,32 @@
 
 - **2022.5.7：** 已支持获取、识别、自动填写表单中的验证码。
 
+- **2022.5.8：** 支持通过命令行参数 `-f` / `--config-file` 指定脚本运行读取的配置文件（模板 [config.json.templ](https://github.com/Asudy/nCoV-Hitcarder-ZJU/blob/master/config.json.templ)）
+
+    1.   从模板复制一份你将使用的配置文件
+
+         ```bash
+         $ cp config.json.templ config-example.json
+         ```
+
+    2.   编辑新的配置文件，填写相应信息，保存退出
+
+    3.   安全起见，可以调整配置文件权限设置
+
+         ```bash
+         $ chmod 600 config-example.json
+         ```
+    
+    4.   运行脚本
+    
+         ```bash
+         $ python3 hitcarder.py -f config-example.json
+         # OR:
+         $ python3 hitcarder.py --config-file config-example.json
+         ```
+
+
+
 以下是原 README。
 
 ---
