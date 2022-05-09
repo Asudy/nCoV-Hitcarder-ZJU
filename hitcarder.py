@@ -6,6 +6,8 @@ from halo import Halo
 from apscheduler.schedulers.blocking import BlockingScheduler
 import ddddocr
 
+DEBUG = True
+
 
 class HitCarder(object):
     """Hit carder class
@@ -27,6 +29,7 @@ class HitCarder(object):
         self.base_url = "https://healthreport.zju.edu.cn/ncov/wap/default/index"
         self.save_url = "https://healthreport.zju.edu.cn/ncov/wap/default/save"
         self.captcha_url = "https://healthreport.zju.edu.cn/ncov/wap/default/code"
+        self.max_retry = 5
         self.headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36"
         }
@@ -58,11 +61,15 @@ class HitCarder(object):
         res = self.sess.post(self.save_url, data=self.info, headers=self.headers)
         return json.loads(res.text)
 
-    def get_captcha(self):
+    def get_captcha(self, update=False):
         """Get, OCR and return the captcha."""
         ocr = ddddocr.DdddOcr(show_ad=False)
         res = self.sess.get(self.captcha_url, headers=self.headers)
-        return ocr.classification(res.content)
+        code = ocr.classification(res.content)
+        if update and self.info:
+            self.info['verifyCode'] = code
+        else:
+            return code
 
     def get_date(self):
         """Get current date."""
@@ -90,6 +97,8 @@ class HitCarder(object):
             raise RegexMatchError('Relative info not found in html with regex: ' + str(err))
         except json.decoder.JSONDecodeError as err:
             raise DecodeError('JSON decode error: ' + str(err))
+
+        if DEBUG: print('DEBUG: old_info:', old_info)
 
         new_info = old_info.copy()
         new_info['id'] = new_id
@@ -167,11 +176,22 @@ def main(username, password):
 
     spinner.start(text='正在为您打卡...')
     try:
-        res = hit_carder.post()
-        if str(res['e']) == '0':
-            spinner.stop_and_persist(symbol='🦄 '.encode('utf-8'), text='已为您打卡成功！')
+        retry_cnt = 0
+        while retry_cnt < hit_carder.max_retry:
+            res = hit_carder.post()
+            if str(res['e']) == '0':
+                if DEBUG: print('DEBUG: res =', res)
+                spinner.stop_and_persist(symbol='🦄 '.encode('utf-8'), text='已为您打卡成功！' + ('重试次数：{}'.format(retry_cnt) if retry_cnt else ''))
+                break
+            elif res['m'] == '验证码错误':
+                if DEBUG: print('DEBUG: res =', res)
+                hit_carder.get_captcha(update=True)     # update the captcha
+                retry_cnt += 1
+            else:
+                spinner.stop_and_persist(symbol='🦄 '.encode('utf-8'), text=res['m'])
+                break
         else:
-            spinner.stop_and_persist(symbol='🦄 '.encode('utf-8'), text=res['m'])
+            spinner.fail('超出最大验证码错误重试次数（{}），请手动打卡'.format(retry_cnt))
     except Exception as err:
         spinner.fail('数据提交失败 ' + str(err))
         return
