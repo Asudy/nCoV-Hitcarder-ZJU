@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import requests, json, re
 import time, datetime, os
+import sys, getopt
 import getpass
 from halo import Halo
 from apscheduler.schedulers.blocking import BlockingScheduler
@@ -178,8 +179,22 @@ def main(username, password):
 
 
 if __name__ == "__main__":
-    if os.path.exists('./config.json'):
-        configs = json.loads(open('./config.json', 'r').read())
+    # Get command line options
+    config_file = 'config.json'
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], 'hf:', ['help', 'config-file='])
+    except getopt.GetoptError:
+        print("Usage: python3 {} [-f|--config-file <config-file>]".format(os.path.basename(__file__)))
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt in ('-h', '--help'):
+            print("Usage: python3 {} [-f|--config-file <config-file>]".format(os.path.basename(__file__)))
+            sys.exit()
+        elif opt in ('-f', '--config-file'):
+            config_file = arg
+
+    if os.path.exists(config_file):
+        configs = json.loads(open(config_file, 'r').read())
         username = configs["username"]
         password = configs["password"]
         hour = configs["schedule"]["hour"]
