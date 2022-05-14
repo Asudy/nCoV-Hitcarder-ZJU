@@ -5,6 +5,7 @@
 ## Changelog
 
 - **2022.5.7：** 已支持获取、识别、自动填写表单中的验证码。
+- **2022.5.8：** 添加验证码失败重试（目前重试次数 hard-code 为 5 次，测试中）
 
 - **2022.5.8：** 支持通过命令行参数 `-f` / `--config-file` 指定脚本运行读取的配置文件（模板 [config.json.templ](https://github.com/Asudy/nCoV-Hitcarder-ZJU/blob/master/config.json.templ)）
 
