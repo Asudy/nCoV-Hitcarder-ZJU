@@ -6,7 +6,7 @@ from halo import Halo
 from apscheduler.schedulers.blocking import BlockingScheduler
 import ddddocr
 
-DEBUG = True
+DEBUG = False
 
 
 class HitCarder(object):
@@ -39,7 +39,8 @@ class HitCarder(object):
         """Login to ZJU platform."""
         res = self.sess.get(self.login_url, headers=self.headers)
         execution = re.search('name="execution" value="(.*?)"', res.text).group(1)
-        res = self.sess.get(url='https://zjuam.zju.edu.cn/cas/v2/getPubKey', headers=self.headers).json()
+        res = self.sess.get(
+            url='https://zjuam.zju.edu.cn/cas/v2/getPubKey', headers=self.headers).json()
         n, e = res['modulus'], res['exponent']
         encrypt_password = self._rsa_encrypt(self.password, e, n)
 
@@ -74,7 +75,7 @@ class HitCarder(object):
     def get_date(self):
         """Get current date."""
         today = datetime.date.today()
-        return "%4d%02d%02d" % (today.year, today.month, today.day)
+        return "{:4d}{:02d}{:02d}".format(today.year, today.month, today.day)
 
     def get_info(self, html=None):
         """Get hit card info, which is the old info with updated new time."""
@@ -98,7 +99,7 @@ class HitCarder(object):
         except json.decoder.JSONDecodeError as err:
             raise DecodeError('JSON decode error: ' + str(err))
 
-        if DEBUG: 
+        if DEBUG:
             with open('info.json', 'w') as f:
                 json.dump(old_info, f, indent=2)
             print('DEBUG: old_info:', old_info)
@@ -112,10 +113,10 @@ class HitCarder(object):
         # form change
         new_info['jrdqtlqk[]'] = 0
         new_info['jrdqjcqk[]'] = 0
-        new_info['sfsqhzjkk'] = 1  # 是否申领杭州健康码
-        new_info['sqhzjkkys'] = 1  # 杭州健康吗颜色，1:绿色 2:红色 3:黄色
-        new_info['sfqrxxss'] = 1  # 是否确认信息属实
-        new_info['jcqzrq'] = ""
+        new_info['sfsqhzjkk'] = 1   # 是否申领杭州健康码
+        new_info['sqhzjkkys'] = 1   # 杭州健康码颜色，1:绿色 2:红色 3:黄色
+        new_info['sfqrxxss'] = 1    # 是否确认信息属实
+        new_info['jcqzrq'] = ""     # 接触确诊人群
         new_info['gwszdd'] = ""
         new_info['szgjcs'] = ""
         new_info['verifyCode'] = self.get_captcha()
@@ -154,7 +155,7 @@ def main(username, password):
         username: (str) 浙大统一认证平台用户名（一般为学号）
         password: (str) 浙大统一认证平台密码
     """
-    print("\n[Time] %s" % datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    print("\n[Time] {}".format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
     print("🚌 打卡任务启动")
     spinner = Halo(text='Loading', spinner='dots')
     spinner.start('正在新建打卡实例...')
@@ -172,7 +173,7 @@ def main(username, password):
     spinner.start(text='正在获取个人信息...')
     try:
         hit_carder.get_info()
-        spinner.succeed('%s %s同学, 你好~' % (hit_carder.info['number'], hit_carder.info['name']))
+        spinner.succeed('{} {}同学, 你好~'.format(hit_carder.info['number'], hit_carder.info['name']))
     except Exception as err:
         spinner.fail('获取信息失败，请手动打卡，更多信息: ' + str(err))
         return
@@ -182,9 +183,11 @@ def main(username, password):
         retry_cnt = 0
         while retry_cnt < hit_carder.max_retry:
             res = hit_carder.post()
-            if DEBUG: print('DEBUG: res =', res, '重试：', retry_cnt)
+            if DEBUG:
+                print('DEBUG: res =', res, '重试：', retry_cnt)
             if str(res['e']) == '0':
-                spinner.stop_and_persist(symbol='🦄 '.encode('utf-8'), text='已为您打卡成功！' + ('重试次数：{}'.format(retry_cnt) if retry_cnt else ''))
+                spinner.stop_and_persist(symbol='🦄 '.encode('utf-8'),
+                    text='已为您打卡成功！' + ('重试次数：{}'.format(retry_cnt) if retry_cnt else ''))
                 break
             elif res['m'] == '验证码错误':
                 hit_carder.get_captcha(update=True)     # update the captcha
@@ -219,7 +222,7 @@ if __name__ == "__main__":
     # Schedule task
     scheduler = BlockingScheduler()
     scheduler.add_job(main, 'cron', args=[username, password], hour=hour, minute=minute)
-    print('⏰ 已启动定时程序，每天 %02d:%02d 为您打卡' % (int(hour), int(minute)))
+    print('⏰ 已启动定时程序，每天 {:02d}:{:02d} 为您打卡'.format(int(hour), int(minute)))
     print('Press Ctrl+{0} to exit'.format('Break' if os.name == 'nt' else 'C'))
 
     try:
