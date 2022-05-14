@@ -189,6 +189,8 @@ def main(username, password):
             elif res['m'] == '验证码错误':
                 hit_carder.get_captcha(update=True)     # update the captcha
                 retry_cnt += 1
+                spinner.fail('验证码错误，已尝试次数：{}'.format(retry_cnt))
+                spinner.start('正在重试...')
             else:
                 spinner.stop_and_persist(symbol='🦄 '.encode('utf-8'), text=res['m'])
                 break
