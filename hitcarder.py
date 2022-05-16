@@ -103,7 +103,7 @@ class HitCarder(object):
         if DEBUG:
             with open('info.json', 'w') as f:
                 json.dump(old_info, f, indent=2)
-            print('DEBUG: old_info:', old_info)
+            print('\n[DEBUG/old_info]', old_info)
 
         new_info = old_info.copy()
         new_info['id'] = new_id
@@ -185,7 +185,7 @@ def main(username, password):
         while try_cnt < hit_carder.max_retry:
             res = hit_carder.post()
             if DEBUG:
-                print('DEBUG: res =', res, '尝试：', try_cnt)
+                print('\n[DEBUG/res]', res, '尝试：', try_cnt)
             if str(res['e']) == '0':
                 spinner.stop_and_persist(symbol='🦄 '.encode('utf-8'),
                     text='已为您打卡成功！' + ('尝试次数：{}'.format(try_cnt) if try_cnt > 1 else ''))
@@ -209,7 +209,7 @@ if __name__ == "__main__":
     # Get command line options
     config_file = 'config.json'
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hf:', ['help', 'config-file='])
+        opts, args = getopt.getopt(sys.argv[1:], 'hf:', ['help', 'config-file=', 'DEBUG'])
     except getopt.GetoptError:
         print("Usage: python3 {} [-f|--config-file <config-file>]".format(os.path.basename(__file__)))
         sys.exit(2)
@@ -219,6 +219,9 @@ if __name__ == "__main__":
             sys.exit()
         elif opt in ('-f', '--config-file'):
             config_file = arg
+        elif opt == '--DEBUG':
+            DEBUG = True
+            print('[DEBUG] Debug mode enabled.')
 
     if os.path.exists(config_file):
         configs = json.loads(open(config_file, 'r').read())
