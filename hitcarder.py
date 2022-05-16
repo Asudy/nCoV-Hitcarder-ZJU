@@ -19,8 +19,11 @@ class HitCarder(object):
         login_url: (str) 登录url
         base_url: (str) 打卡首页url
         save_url: (str) 提交打卡url
-        self.headers: (dir) 请求头
-        sess: (requests.Session) 统一的session
+        captcha_url: (str) 验证码url
+        max_retry: (int) 验证码最多尝试次数
+        headers: (dict) 请求头
+        sess: (requests.Session) 用于打卡的统一session
+        info: (dict) 打卡信息
     """
 
     def __init__(self, username, password):
@@ -223,6 +226,7 @@ if __name__ == "__main__":
             DEBUG = True
             print('[DEBUG] Debug mode enabled.')
 
+    # Read config file
     if os.path.exists(config_file):
         configs = json.loads(open(config_file, 'r').read())
         username = configs["username"]
@@ -237,11 +241,11 @@ if __name__ == "__main__":
         minute = input("\tminute: ") or 5
     main(username, password)
 
-    # Schedule task
+    # Start schedule task
     scheduler = BlockingScheduler()
     scheduler.add_job(main, 'cron', args=[username, password], hour=hour, minute=minute)
     print('⏰ 已启动定时程序，每天 {:02d}:{:02d} 为您打卡'.format(int(hour), int(minute)))
-    print('Press Ctrl+{0} to exit'.format('Break' if os.name == 'nt' else 'C'))
+    print('Press Ctrl+{} to exit'.format('Break' if os.name == 'nt' else 'C'))
 
     try:
         scheduler.start()
