@@ -181,25 +181,25 @@ def main(username, password):
 
     spinner.start(text='正在为您打卡...')
     try:
-        retry_cnt = 0
-        while retry_cnt < hit_carder.max_retry:
+        try_cnt = 1
+        while try_cnt < hit_carder.max_retry:
             res = hit_carder.post()
             if DEBUG:
-                print('DEBUG: res =', res, '重试：', retry_cnt)
+                print('DEBUG: res =', res, '尝试：', try_cnt)
             if str(res['e']) == '0':
                 spinner.stop_and_persist(symbol='🦄 '.encode('utf-8'),
-                    text='已为您打卡成功！' + ('重试次数：{}'.format(retry_cnt) if retry_cnt else ''))
+                    text='已为您打卡成功！' + ('尝试次数：{}'.format(try_cnt) if try_cnt > 1 else ''))
                 break
             elif res['m'] == '验证码错误':
                 hit_carder.get_captcha(update=True)     # update the captcha
-                retry_cnt += 1
-                spinner.fail('验证码错误，已尝试次数：{}'.format(retry_cnt))
-                spinner.start('正在重试...')
+                spinner.fail('验证码错误，已尝试次数：{}'.format(try_cnt))
+                try_cnt += 1
+                spinner.start('正在尝试...')
             else:
                 spinner.stop_and_persist(symbol='🦄 '.encode('utf-8'), text=res['m'])
                 break
         else:
-            spinner.fail('超出最大验证码错误重试次数（{}），请手动打卡'.format(retry_cnt))
+            spinner.fail('超出验证码最大错误尝试次数（{}），请手动打卡'.format(try_cnt))
     except Exception as err:
         spinner.fail('数据提交失败 ' + str(err))
         return
