@@ -7,7 +7,8 @@ from halo import Halo
 from apscheduler.schedulers.blocking import BlockingScheduler
 import ddddocr
 
-DEBUG = False
+DEBUG = False               # Debug mode switch
+CAPTCHA_ENABLED = False     # CAPTCHA recognition function switch
 
 
 class HitCarder(object):
@@ -123,7 +124,8 @@ class HitCarder(object):
         new_info['jcqzrq'] = ""     # 接触确诊人群
         new_info['gwszdd'] = ""
         new_info['szgjcs'] = ""
-        new_info['verifyCode'] = self.get_captcha()
+        if CAPTCHA_ENABLED:
+            new_info['verifyCode'] = self.get_captcha()
         self.info = new_info
         return new_info
 
